@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Henrex Football Prediction Platform</title>
+<style>
+body{font-family: Arial; background:#0b0b0b; color:white; text-align:center;}
+table{margin:auto; border-collapse:collapse; width:95%; table-layout: fixed;}
+th, td{border:1px solid #444; padding:8px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+th{background:#222; font-size:14px;}
+tr:hover{background:#333;}
+img.team-logo{width:25px; vertical-align:middle; margin-right:5px;}
+td.match{text-align:left;}
+input#search-bar{padding:6px;width:200px;margin-bottom:10px;border-radius:5px;border:none;}
+.league-header{background:#111;font-weight:bold;cursor:pointer;}
+.live-row{background:#1a3f5c !important;font-weight:bold;}
+.hot-match{background:#ff9900;color:black;font-weight:bold;}
+button.bet-btn{padding:4px 8px;background:#ff4500;color:white;border:none;border-radius:4px;}
+@media screen and (max-width:768px){table,th,td{font-size:12px;padding:6px;} img.team-logo{width:20px;}}
+</style>
+</head>
+<body>
+
+<h1>⚽ Henrex Football Prediction Platform</h1>
+
+{% if session.get('username') %}
+<p>Welcome {{ session.get('username') }} | <a href="/logout">Logout</a></p>
+{% else %}
+<p><a href="/login">Login</a> | <a href="/register">Register</a></p>
+{% endif %}
+
+<input type="text" id="search-bar" placeholder="Search team..." onkeyup="searchMatches()">
+
+<h2>Live Matches</h2>
+<table id="live-table">
+<tr>
+<th>League</th><th>Time</th><th>Match</th><th>Status</th><th>Result</th>
+<th>Over/Under</th><th>BTTS</th><th>Corners</th><th>Bet</th><th>Premium</th>
+</tr>
+{% for match in live_matches %}
+<tr class="{% if match.is_hot %}hot-match{% endif %} live-row">
+<td>{{ match.league }}</td>
+<td>{{ match.time }}</td>
+<td class="match"><img src="{{ match.home_logo }}" class="team-logo">{{ match.home }} vs <img src="{{ match.away_logo }}" class="team-logo">{{ match.away }}</td>
+<td>{{ match.status }}</td>
+<td>{{ match.result }}</td>
+<td>{{ match.goals }}</td>
+<td>{{ match.btts }}</td>
+<td>{{ match.corners }}</td>
+<td><a href="{{ match.affiliate_link }}" target="_blank"><button class="bet-btn">Place Bet</button></a></td>
+<td>{% if session.get('is_premium') %}{{ match.adv_pred }}{% elif session.get('username') %}
+    {% if PAYSTACK_VERIFIED %}<a href="/subscribe/{{ session.get('username') }}">Upgrade</a>{% else %}Coming Soon{% endif %}
+{% else %}<a href="/register">Register to Upgrade</a>{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+
+<h2>Major Leagues Matches Today</h2>
+<table id="major-table">
+<tr>
+<th>League</th><th>Time</th><th>Match</th><th>Status</th><th>Result</th>
+<th>Over/Under</th><th>BTTS</th><th>Corners</th><th>Bet</th><th>Premium</th>
+</tr>
+{% set current_league="" %}
+{% for match in major_matches %}
+    {% if match.league != current_league %}
+        <tr class="league-header-row" onclick="toggleLeague('{{ match.league | replace(' ','_') }}')">
+            <td colspan="10" class="league-header">{{ match.league }} &#9660;</td>
+        </tr>
+        {% set current_league = match.league %}
+    {% endif %}
+<tr class="league-{{ match.league | replace(' ','_') }} {% if match.is_hot %}hot-match{% endif %}">
+<td>{{ match.league }}</td>
+<td>{{ match.time }}</td>
+<td class="match"><img src="{{ match.home_logo }}" class="team-logo">{{ match.home }} vs <img src="{{ match.away_logo }}" class="team-logo">{{ match.away }}</td>
+<td>{{ match.status }}</td>
+<td>{{ match.result }}</td>
+<td>{{ match.goals }}</td>
+<td>{{ match.btts }}</td>
+<td>{{ match.corners }}</td>
+<td><a href="{{ match.affiliate_link }}" target="_blank"><button class="bet-btn">Place Bet</button></a></td>
+<td>{% if session.get('is_premium') %}{{ match.adv_pred }}{% elif session.get('username') %}
+    {% if PAYSTACK_VERIFIED %}<a href="/subscribe/{{ session.get('username') }}">Upgrade</a>{% else %}Coming Soon{% endif %}
+{% else %}<a href="/register">Register to Upgrade</a>{% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+
+<script>
+function searchMatches() {
+    let input=document.getElementById("search-bar").value.toUpperCase();
+    let tables=[document.getElementById("live-table"),document.getElementById("major-table")];
+    tables.forEach(table=>{
+        let tr=table.getElementsByTagName("tr");
+        for(let i=1;i<tr.length;i++){
+            let matchCell=tr[i].getElementsByTagName("td")[2];
+            if(matchCell){
+                let txtValue=matchCell.textContent||matchCell.innerText;
+                tr[i].style.display=txtValue.toUpperCase().includes(input)?"":"none";
+            }
+        }
+    });
+}
+
+function toggleLeague(leagueClass){
+    let rows=document.getElementsByClassName('league-'+leagueClass);
+    for(let i=0;i<rows.length;i++){
+        rows[i].style.display=(rows[i].style.display==='none')?'':'none';
+    }
+}
+</script>
+
+</body>
+</html>
